@@ -1,0 +1,1 @@
+const e=JSON.parse('{"key":"v-2bc0f532","path":"/configuration/","title":"Configuration","lang":"en-US","frontmatter":{"sidebar":"auto"},"headers":[{"level":2,"title":"Environment variables","slug":"environment-variables","link":"#environment-variables","children":[]}],"git":{},"filePathRelative":"configuration/README.md"}');export{e as data};
