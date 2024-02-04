@@ -1,22 +1,11 @@
+import { RfxcomInfo } from './rfxcom';
+
 export interface KeyValue {[s: string]: any}
 
 export class EntityState{
   id: string = "";
   type: string = "";
   subtype: string = "";
-}
-
-//  subtype: string,
-//seqnbr:           seqnbr,
-//cmnd:             cmnd,
-
-export class RfxcomInfo {
-    receiverTypeCode: number = 0;
-    receiverType:     string = '';
-    hardwareVersion:  string = '';
-    firmwareVersion:  number = 0;
-    firmwareType:     string = '';
-    enabledProtocols: string[] = [];
 }
   
 export class BridgeInfo {
@@ -51,11 +40,3 @@ export class DeviceBridge {
   
 }
 
-export interface MqttEventListener{
-    subscribeTopic(): string[];
-    onMQTTMessage(data: MQTTMessage): void;
-}
-export interface MQTTMessage{
-    topic: string,
-    message: any
-}

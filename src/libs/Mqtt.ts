@@ -2,7 +2,7 @@
 import * as mqtt from 'mqtt';
 import {Settings, SettingMqtt} from './Settings';
 import { QoS, IClientOptions }  from 'mqtt';
-import { MqttEventListener,MQTTMessage }  from '../models/models';
+import { MqttEventListener,MQTTMessage }  from '../models/mqtt';
 import fs from 'fs';
 import logger from './logger';
 
