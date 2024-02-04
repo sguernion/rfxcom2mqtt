@@ -1,5 +1,5 @@
 import {Settings} from './Settings';
-import {EntityState,KeyValue} from './models';
+import {EntityState,KeyValue} from '../models/models';
 import fs from 'fs';
 import objectAssignDeep from 'object-assign-deep';
 import logger from './logger';

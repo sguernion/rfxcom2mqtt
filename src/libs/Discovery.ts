@@ -4,7 +4,7 @@ var rfxcom  = require('rfxcom');
 import {IRfxcom} from './RfxcomBridge';
 import {Settings, SettingHass, SettingDevice} from './Settings';
 import Mqtt from './Mqtt';
-import { DeviceEntity, DeviceBridge,BridgeInfo,MQTTMessage,MqttEventListener } from './models';
+import { DeviceEntity, DeviceBridge,BridgeInfo,MQTTMessage,MqttEventListener } from '../models/models';
 import utils from './utils';
 import State from './state';
 import logger from './logger';
@@ -217,25 +217,14 @@ export class HomeassistantDiscovery extends AbstractDiscovery{
 
     const deviceJson = new DeviceEntity([devicePrefix+'_'+deviceId,devicePrefix+'_'+deviceName],deviceName);
 
-    if( payload.rssi !== undefined ){
-      const json = {
-        availability:[{topic: this.topicWill }],
-        device: deviceJson,
-        enabled_by_default: false,
-        entity_category: "diagnostic",
-        icon: "mdi:signal",
-        json_attributes_topic: this.topicDevice + '/' + entityTopic,
-        name: deviceName+" Linkquality",
-        object_id: deviceTopic+'_linkquality',
-        origin: this.discoveryOrigin,
-        state_class: "measurement",
-        state_topic: this.topicDevice + '/' + entityTopic,
-        unique_id: deviceTopic +'_linkquality_' + devicePrefix,
-        unit_of_measurement:"dBm",
-        value_template: "{{ value_json.rssi }}"
-      };
-      this.publishDiscovery('sensor/' + deviceTopic +'/linkquality/config',JSON.stringify(json));
-    }
+    this.publishDiscoverySensorToMQTT(payload,deviceJson,deviceName,deviceTopic,entityTopic,devicePrefix)
+    this.publishDiscoverySwitchToMQTT(payload,deviceJson,deviceName,deviceTopic, entityTopic,devicePrefix,entityId)
+  
+  }
+
+  publishDiscoverySwitchToMQTT(payload : any,deviceJson: any,deviceName: any,deviceTopic: any,
+    entityTopic:any,devicePrefix:any,entityId: any) {
+    
     if( payload.type === 'lighting1' || payload.type === 'lighting2' || payload.type === 'lighting3'
         || payload.type === 'lighting5' || payload.type === 'lighting6' ){
       let state_off="Off";
@@ -266,7 +255,77 @@ export class HomeassistantDiscovery extends AbstractDiscovery{
       };
       this.publishDiscovery('switch/' + entityTopic +'/config',JSON.stringify(json));
     }
+
+    //"activlink", "asyncconfig", "asyncdata", "blinds1", "blinds2", "camera1", "chime1", "curtain1", "edisio",
+    //"fan", "funkbus", "homeConfort", "hunterFan", "lighting4",
+    // "radiator1", "remote", "rfy", "security1", "thermostat1", "thermostat2", "thermostat3", "thermostat4", "thermostat5"
   
+  }
+
+  publishDiscoverySensorToMQTT(payload : any,deviceJson: any,deviceName: any,deviceTopic: any,
+    entityTopic:any,devicePrefix:any) {
+
+    if( payload.rssi !== undefined ){
+      const json = {
+        availability:[{topic: this.topicWill }],
+        device: deviceJson,
+        enabled_by_default: false,
+        entity_category: "diagnostic",
+        icon: "mdi:signal",
+        json_attributes_topic: this.topicDevice + '/' + entityTopic,
+        name: deviceName+" Linkquality",
+        object_id: deviceTopic+'_linkquality',
+        origin: this.discoveryOrigin,
+        state_class: "measurement",
+        state_topic: this.topicDevice + '/' + entityTopic,
+        unique_id: deviceTopic +'_linkquality_' + devicePrefix,
+        unit_of_measurement:"dBm",
+        value_template: "{{ value_json.rssi }}"
+      };
+      this.publishDiscovery('sensor/' + deviceTopic +'/linkquality/config',JSON.stringify(json));
+    }
+    // batteryLevel
+    if( payload.batteryLevel !== undefined ){
+      const json = {
+        availability:[{topic: this.topicWill }],
+        device: deviceJson,
+        device_class: 'battery',
+        enabled_by_default: true,
+        icon: "mdi:battery",
+        json_attributes_topic: this.topicDevice + '/' + entityTopic,
+        name: deviceName+" Batterie",
+        object_id: deviceTopic+'__battery',
+        origin: this.discoveryOrigin,
+        state_class: "measurement",
+        state_topic: this.topicDevice + '/' + entityTopic,
+        unique_id: deviceTopic +'_battery_' + devicePrefix,
+        unit_of_measurement:"%",
+        value_template: "{{ value_json.batteryLevel }}"
+      };
+      this.publishDiscovery('sensor/' + deviceTopic +'/battery/config',JSON.stringify(json));
+    }
+    // batteryVoltage
+    if( payload.batteryVoltage !== undefined ){
+      const json = {
+        availability:[{topic: this.topicWill }],
+        device: deviceJson,
+        device_class: 'voltage',
+        enabled_by_default: true,
+        icon: "mdi:sine-wave",
+        json_attributes_topic: this.topicDevice + '/' + entityTopic,
+        name: deviceName+" Tension",
+        object_id: deviceTopic+'__voltage',
+        origin: this.discoveryOrigin,
+        state_class: "measurement",
+        state_topic: this.topicDevice + '/' + entityTopic,
+        unique_id: deviceTopic +'_voltage_' + devicePrefix,
+        unit_of_measurement:"mV",
+        value_template: "{{ value_json.batteryVoltage }}"
+      };
+      this.publishDiscovery('sensor/' + deviceTopic +'/voltage/config',JSON.stringify(json));
+    }
+
+    // 
   }
 }
 
