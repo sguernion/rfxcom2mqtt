@@ -49,6 +49,26 @@ export default class Server {
          this.state = state;
     }
 
+    private authenticate(req: Request, res: Response, next: NextFunction): void {
+        const authHeader = req.headers.authorization;
+        if (this.frontConf.authToken){
+            if ( authHeader && authHeader !== "null") {
+                const token = authHeader.split(" ")[1];
+                logger.info("auth Header");
+                const isAuthenticated = (this.frontConf.authToken === token);
+                if(!isAuthenticated){
+                    res.status(StatusCodes.UNAUTHORIZED).json({ success: false, message: "UnAuthorized" });
+                }else{
+                    next();
+                }
+            } else {
+                res.status(StatusCodes.UNAUTHORIZED).json({ success: false, message: "not configured" });
+            }
+        }else{
+            next();
+        }   
+    }
+
     private isHttpsConfigured():boolean {
         if (this.frontConf.sslCert && this.frontConf.sslKey) {
             if (!fs.existsSync(this.frontConf.sslCert) || !fs.existsSync(this.frontConf.sslKey)) {
@@ -71,12 +91,12 @@ export default class Server {
             this.server.use(express.json());
             this.server.use(express.urlencoded({extended: true}));
             this.server.use(cookieParser());
-            this.server.use('/api', this.router);
-            
         } else {
             this.server = express();
-            this.server.use('/api', this.router);
         }
+
+        this.server.use('/api', (req: Request, res: Response, next: NextFunction) => {this.authenticate(req,res,next)});
+        this.server.use('/api', this.router);
 
         //initialize the WebSocket server instance
         //const wss = expressWs(this.server);
@@ -118,8 +138,16 @@ export default class Server {
             });
         }
 
-        logger.info(`serve files : ${__dirname+'/../../frontend/build'}`);
-        this.server.use("/", expressStaticGzip(  '../frontend/build/'));
+        const staticFrontend = expressStaticGzip(  '../frontend/build/',{
+            enableBrotli: true,
+            index: false,
+            customCompressions: [{
+                encodingName: 'deflate',
+                fileExtension: 'zz'
+            }],
+            orderPreference: ['br','gz']
+        });
+        this.server.use("*",staticFrontend);
         //this.server.use("/", expressStaticGzip( frontend.getPath()));
 
         

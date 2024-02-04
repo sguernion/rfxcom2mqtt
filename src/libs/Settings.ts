@@ -22,6 +22,7 @@ export interface Settings {
 
 export interface SettingFrontend{
     enabled: boolean,
+    authToken: string,
     host: string;
     port: number;
     sslCert: string;
