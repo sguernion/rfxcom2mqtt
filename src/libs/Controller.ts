@@ -3,7 +3,9 @@ import {Settings, SettingDevice, read} from './Settings';
 import Discovery from './Discovery';
 import Mqtt from './Mqtt';
 import Rfxcom, {IRfxcom,MockRfxcom} from './RfxcomBridge';
-import { RfxcomInfo,BridgeInfo,MQTTMessage, MqttEventListener } from './models';
+import { BridgeInfo } from '../models/models';
+import { MQTTMessage, MqttEventListener } from '../models/mqtt';
+import { RfxcomInfo } from '../models/rfxcom';
 import utils from './utils';
 import logger from './logger';
 

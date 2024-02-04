@@ -1,7 +1,7 @@
 
 var rfxcom  = require('rfxcom');
 import { SettingRfxcom,SettingDevice } from './Settings';
-import { RfxcomInfo } from './models';
+import { RfxcomInfo } from '../models/rfxcom';
 import logger from './logger';
 
 

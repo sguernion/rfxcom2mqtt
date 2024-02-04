@@ -15,7 +15,8 @@
         "winston": "^3.11.0"
     },
     "scripts": {
-        "start": "node src/index.ts"
+        "start": "ts-node index.ts",
+        "dev": "ts-node dev.ts"
     },
     "devDependencies": {
         "@tsconfig/node18": "^18.2.2",
