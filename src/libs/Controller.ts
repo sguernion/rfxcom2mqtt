@@ -2,14 +2,16 @@
 import {Settings, SettingDevice, read} from './Settings';
 import Discovery from './Discovery';
 import Mqtt from './Mqtt';
+import Server from './Server';
 import Rfxcom, {IRfxcom,MockRfxcom} from './RfxcomBridge';
 import { BridgeInfo } from '../models/models';
 import { MQTTMessage, MqttEventListener } from '../models/mqtt';
 import { RfxcomInfo } from '../models/rfxcom';
 import utils from './utils';
 import logger from './logger';
+import State, {DeviceStore} from './state';
 
-var cron = require('node-cron');
+import cron  from 'node-cron';
 
 
 export default class Controller implements MqttEventListener{
@@ -17,6 +19,10 @@ export default class Controller implements MqttEventListener{
     private rfxBridge : IRfxcom
     private mqttClient : Mqtt
     private discovery : Discovery
+    private server?: Server
+    protected state: State;
+    protected device: DeviceStore;
+    protected bridgeInfo = new BridgeInfo();
     
     private exitCallback: (code: number, restart: boolean) => void;
   
@@ -25,18 +31,26 @@ export default class Controller implements MqttEventListener{
         
         const file = process.env.RFXCOM2MQTT_CONFIG ?? "/app/data/config.yml";
         this.config = read(file);
+        this.state = new State(this.config);
+        this.device = new DeviceStore(this.config);
         logger.setLevel(this.config.loglevel);
         logger.info("configuration : "+JSON.stringify(this.config));
         this.rfxBridge = this.config.mock ? new MockRfxcom(this.config.rfxcom) : new Rfxcom(this.config.rfxcom);
         this.mqttClient = new Mqtt(this.config)
-        this.discovery = new Discovery( this.mqttClient, this.rfxBridge, this.config );
+        this.discovery = new Discovery( this.mqttClient, this.rfxBridge, this.config, this.state);
         this.mqttClient.addListener(this.discovery);
         this.mqttClient.addListener(this);
+
+        if(this.config.frontend.enabled){
+            this.server = new Server(this.config, this.device, this.state,this.bridgeInfo);
+        }
     }
 
     async start(): Promise<void> {
         logger.info('Controller Starting');
+        this.state.start();
         this.discovery.start();
+        this.server?.start();
         try {
             await this.rfxBridge.initialise();
         } catch (error: any) {
@@ -59,10 +73,10 @@ export default class Controller implements MqttEventListener{
         const mqttClient = this.mqttClient;
         const hass = this.discovery;
         const config = this.config
+        const bridgeInfo = this.bridgeInfo;
         const version = utils.getRfxcom2MQTTVersion();
         // RFXCOM Status
         this.rfxBridge.onStatus(function(coordinatorInfo: RfxcomInfo) {
-            let bridgeInfo = new BridgeInfo();
             bridgeInfo.coordinator = coordinatorInfo;
             bridgeInfo.version = version;
             bridgeInfo.logLevel = config.loglevel;
@@ -86,6 +100,7 @@ export default class Controller implements MqttEventListener{
         await this.mqttClient.disconnect();
         await this.rfxBridge.stop();
         await this.exitCallback(0, restart);
+        await this.server?.stop();
     }
 
     scheduleHealthcheck(){
@@ -94,7 +109,7 @@ export default class Controller implements MqttEventListener{
                 logger.debug('Healthcheck');
                 const mqttClient = this.mqttClient;
                 
-                let stop = this.stop;
+                const stop = this.stop;
                 this.rfxBridge.getStatus(function(status: string) {
                     mqttClient.publishState(status);
                     if (status === 'offline') {
@@ -118,7 +133,7 @@ export default class Controller implements MqttEventListener{
         }
 
         if (dn[1] === 'command') {
-            let deviceType = dn[2];
+            const deviceType = dn[2];
             let entityName = dn[3];
             // Used for units and forms part of the device id
             if (dn[4] !== undefined && dn[4].length > 0) {

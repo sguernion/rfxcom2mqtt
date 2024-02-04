@@ -1,13 +1,13 @@
 'use strict';
 
-var rfxcom  = require('rfxcom');
+import rfxcom from 'rfxcom';
 import {IRfxcom} from './RfxcomBridge';
 import {Settings, SettingHass, SettingDevice} from './Settings';
 import Mqtt from './Mqtt';
 import { DeviceEntity, DeviceBridge,BridgeInfo } from '../models/models';
 import { MQTTMessage,MqttEventListener } from '../models/mqtt';
 import utils from './utils';
-import State from './state';
+import StateStore from './state';
 import logger from './logger';
 
 interface DiscoveryEntry{}
@@ -52,9 +52,9 @@ export default class Discovery implements MqttEventListener{
   homeassistant: HomeassistantDiscovery;
   bridge: BridgeDiscovery;
 
-  constructor(mqtt: Mqtt, rfxtrx: IRfxcom, config : Settings){
+  constructor(mqtt: Mqtt, rfxtrx: IRfxcom, config : Settings,state: StateStore){
     this.baseTopic =  mqtt.topics.base;
-    this.homeassistant = new HomeassistantDiscovery(mqtt, rfxtrx, config);
+    this.homeassistant = new HomeassistantDiscovery(mqtt, rfxtrx, config, state);
     this.bridge =  new BridgeDiscovery(mqtt, rfxtrx, config);
   }
 
@@ -92,13 +92,13 @@ export default class Discovery implements MqttEventListener{
 
 export class HomeassistantDiscovery extends AbstractDiscovery{
 
-  protected state: State;
+  protected state: StateStore;
   protected devicesConfig: SettingDevice[];
 
-  constructor(mqtt: Mqtt, rfxtrx: IRfxcom, config : Settings){
+  constructor(mqtt: Mqtt, rfxtrx: IRfxcom, config : Settings,state: StateStore){
     super(mqtt, rfxtrx, config);
     this.devicesConfig = config.rfxcom.devices;
-    this.state = new State(config);
+    this.state = state;
   }
 
   async start(){
@@ -115,9 +115,9 @@ export class HomeassistantDiscovery extends AbstractDiscovery{
     const value = data.message.toString('utf8');
     logger.info(`Mqtt cmd from discovery :${data.topic} ${value}`);
     const dn = data.topic.split('/');
-    let deviceType = dn[2];
-    let id = dn[4];
-    let subTypeValue = dn[3];
+    const deviceType = dn[2];
+    const id = dn[4];
+    const subTypeValue = dn[3];
     let entityName = id;
     let entityTopic = id;
     let unitCode = 1;
@@ -134,7 +134,7 @@ export class HomeassistantDiscovery extends AbstractDiscovery{
     logger.debug(`update ${deviceType}.${entityName} with value ${value}`);
     
     // get from save state
-    let entityState = this.state.get({id: entityName,type:deviceType,subtype:data.message.subtype})
+    const entityState = this.state.get({id: entityName,type:deviceType,subtype:data.message.subtype})
     entityState.deviceType = deviceType;
     this.updateEntityStateFromValue(entityState,value);
     this.rfxtrx.sendCommand(deviceType,subTypeValue,entityState.rfxFunction,entityTopic);
@@ -181,8 +181,8 @@ export class HomeassistantDiscovery extends AbstractDiscovery{
 
   publishDiscoveryToMQTT(payload : any) {
     const devicePrefix = this.config.discovery_device;
-    let id = payload.id;
-    let deviceId = payload.subTypeValue+"_"+id.replace("0x","");
+    const id = payload.id;
+    const deviceId = payload.subTypeValue+"_"+id.replace("0x","");
     let deviceTopic = payload.id 
     let deviceName = deviceId;
     let entityId = payload.subTypeValue+"_"+id.replace("0x","");
