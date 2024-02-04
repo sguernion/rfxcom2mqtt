@@ -1,4 +1,4 @@
-var load  = require('node-config-yaml')
+import load from 'node-config-yaml';
 import objectAssignDeep from 'object-assign-deep';
 
 type RecursivePartial<T> = {[P in keyof T]?: RecursivePartial<T[P]>;};
@@ -16,7 +16,16 @@ export interface Settings {
     },
     homeassistant: SettingHass,
     mqtt: SettingMqtt,
-    rfxcom: SettingRfxcom
+    rfxcom: SettingRfxcom,
+    frontend: SettingFrontend
+}
+
+export interface SettingFrontend{
+    enabled: boolean,
+    host: string;
+    port: number;
+    sslCert: string;
+    sslKey: string;
 }
 
 export interface SettingMqtt{
@@ -119,6 +128,9 @@ const defaults: RecursivePartial<Settings> = {
         receive: ['temperaturehumidity1','homeconfort','lighting1','lighting2','lighting3','lighting4','remote','security1'],
         devices: []
     },
+    frontend: {
+        enabled : false
+    }
    
 }
 

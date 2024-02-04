@@ -1,5 +1,5 @@
 
-var rfxcom  = require('rfxcom');
+import rfxcom  from 'rfxcom';
 import { SettingRfxcom,SettingDevice } from './Settings';
 import { RfxcomInfo } from '../models/rfxcom';
 import logger from './logger';
@@ -38,7 +38,7 @@ export class MockRfxcom implements IRfxcom{
   }
   onStatus(callback: any){
     logger.info('RFXCOM Mock on status');
-    let rfxcomInfo = new RfxcomInfo()
+    const rfxcomInfo = new RfxcomInfo()
     rfxcomInfo.receiverTypeCode = 83;
     rfxcomInfo.receiverType = 'Mock';
     rfxcomInfo.hardwareVersion = '1.2';
@@ -57,7 +57,7 @@ export class MockRfxcom implements IRfxcom{
   subscribeProtocolsEvent(callback: any){
     logger.info('RFXCOM Mock subscribeProtocolsEvent');
     const deviceId = 'mocked_device2';
-    let deviceConf =  this.config.devices.find((dev: any) => dev.id === deviceId);
+    const deviceConf =  this.config.devices.find((dev: any) => dev.id === deviceId);
     callback('lighting2', {id:deviceId,
       "seqnbr": 7,
       "subtype": 0,
@@ -149,8 +149,8 @@ export default class Rfxcom implements IRfxcom{
       return (deviceFunctions.find((rfxcomDeviceFunction) => rfxcomDeviceFunction === deviceFunction) !== undefined);
     }
   
-    private enableRFXProtocols(){
-      let config = this.config;
+    protected enableRFXProtocols(){
+      const config = this.config;
       this.rfxtrx.enableRFXProtocols(config.receive, function(evt: any) {
         logger.info('RFXCOM enableRFXProtocols : '+ config.receive);
       });
@@ -195,7 +195,6 @@ export default class Rfxcom implements IRfxcom{
     onCommand(deviceType: string, entityName: string, payload: any){
       let transmitRepetitions: number| undefined;
       let subtype: string;
-      let deviceFunction: string;
 
       if (!this.validRfxcomDevice(deviceType)) {
         logger.warn(deviceType+ ' is not a valid device');
@@ -205,7 +204,7 @@ export default class Rfxcom implements IRfxcom{
       // We will need subType from payload
       subtype = payload.subtype;
     
-      deviceFunction = payload.deviceFunction;
+      const deviceFunction = payload.deviceFunction;
 
       if (!this.validRfxcomDeviceFunction(deviceType, payload.deviceFunction)) {
         logger.warn(payload.deviceFunction+ ' is not a valid device function on '+ deviceType);
@@ -320,8 +319,8 @@ export default class Rfxcom implements IRfxcom{
     sendCommand(deviceType: string ,subTypeValue: string ,command: string | undefined  ,entityName: string){
       if( command !== undefined){
         logger.debug("send rfxcom command : "+command+" for device :"+deviceType+"."+entityName);
-        let subType = this.getSubType(deviceType,subTypeValue);
-        let device = new rfxcom[this.capitalize(deviceType)](this.rfxtrx, subType);
+        const subType = this.getSubType(deviceType,subTypeValue);
+        const device = new rfxcom[this.capitalize(deviceType)](this.rfxtrx, subType);
         device[command](entityName);
       }
     }
