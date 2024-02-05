@@ -138,17 +138,17 @@ export class HomeassistantDiscovery extends AbstractDiscovery{
     entityState.deviceType = deviceType;
     this.updateEntityStateFromValue(entityState,value);
     this.rfxtrx.sendCommand(deviceType,subTypeValue,entityState.rfxFunction,entityTopic);
-    this.mqtt.publish(this.mqtt.topics.devices + '/' + entityName, JSON.stringify(entityState),  (error: any) => {},{retain: true, qos: 1});
+    this.mqtt.publish(this.mqtt.topics.devices + '/' + entityTopic, JSON.stringify(entityState),  (error: any) => {},{retain: true, qos: 1});
   }
 
   updateEntityStateFromValue(entityState: any,value: string){
     if( entityState.deviceType === 'lighting1' || entityState.deviceType === 'lighting2' || entityState.deviceType === 'lighting3'
     || entityState.deviceType === 'lighting5' || entityState.deviceType === 'lighting6' ) {
+      entityState.command = value;
       const cmd = value.toLowerCase().split(" ")
       let command = cmd[0];
       if (cmd[0] === "group") {
         command = cmd[1];
-       
       }
       if (command === "on") {
         entityState.commandNumber = (cmd[0] === "group")?4:1; //WORK only for lithing2
@@ -164,8 +164,10 @@ export class HomeassistantDiscovery extends AbstractDiscovery{
       }
     }else if (entityState.deviceType === "lighting4") {
       entityState.rfxFunction = 'sendData';
+      entityState.command = value;
     }else if (entityState.deviceType === "chime1") {
       entityState.rfxFunction = 'chime';
+      entityState.command = value;
     } else {
       logger.error('device type ('+entityState.deviceType+') not supported');
     }
