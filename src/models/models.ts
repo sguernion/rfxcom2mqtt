@@ -2,6 +2,12 @@ import { RfxcomInfo } from './rfxcom';
 
 export interface KeyValue {[s: string]: any}
 
+export class DeviceState{
+  id: string = "";
+  type: string = "";
+  subtype: string = "";
+}
+
 export class EntityState{
   id: string = "";
   type: string = "";
