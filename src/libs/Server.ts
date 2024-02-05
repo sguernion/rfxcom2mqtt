@@ -138,7 +138,7 @@ export default class Server {
             });
         }
 
-        const staticFrontend = expressStaticGzip(  '../frontend/build/',{
+        /*const staticFrontend = expressStaticGzip(  '../frontend/build/',{
             enableBrotli: true,
             index: false,
             customCompressions: [{
@@ -147,7 +147,7 @@ export default class Server {
             }],
             orderPreference: ['br','gz']
         });
-        this.server.use("*",staticFrontend);
+        this.server.use("*",staticFrontend);*/
         //this.server.use("/", expressStaticGzip( frontend.getPath()));
 
         
